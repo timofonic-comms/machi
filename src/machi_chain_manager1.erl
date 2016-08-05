@@ -27,7 +27,7 @@
 %% "Chain Replication" state.  This role is roughly analogous to the
 %% "Riak Core" application inside of Riak, which takes care of
 %% coordinating replica placement and replica repair.
-%% 
+%%
 %% For each primitive data server in the cluster, a Machi FLU, there
 %% is a Chain Manager process that manages its FLU's role within the
 %% Machi cluster's Chain Replication scheme.  Each Chain Manager
@@ -236,7 +236,6 @@ test_read_latest_public_projection(Pid, ReadRepairP) ->
 
 init({MyName, InitMembersDict, MgrOpts0}) ->
     put(ttt, [?LINE]),
-    _ = random:seed(now()),
     init_remember_down_list(),
     MgrOpts = MgrOpts0 ++ application:get_env(machi, chain_manager_opts, []),
     Opt = fun(Key, Default) -> proplists:get_value(Key, MgrOpts, Default) end,
@@ -273,13 +272,13 @@ init({MyName, InitMembersDict, MgrOpts0}) ->
     Proj = make_none_projection(CurrentEpoch,
                                 MyName, All_list, Witness_list, MembersDict),
 
-    RunEnv = [{seed, Opt(seed, now())},
+    RunEnv = [{seed, Opt(seed, erlang:timestamp())},
               {use_partition_simulator, Opt(use_partition_simulator, false)},
               {simulate_repair, Opt(simulate_repair, true)},
               {network_partitions, Opt(network_partitions, [])},
               {network_islands, Opt(network_islands, [])},
               {last_up_nodes, []},
-              {last_up_nodes_time, now()},
+              {last_up_nodes_time, erlang:timestamp()},
               {up_nodes, Opt(up_nodes, [])}],
     ActiveP = Opt(active_mode, true),
     S = set_proj(#ch_mgr{name=MyName,
@@ -330,7 +329,7 @@ handle_call({set_chain_members, SetChainName, SetOldEpoch, CMode,
     NewProj = machi_projection:update_checksum(
                 OldProj#projection_v1{author_server=MyName,
                                       chain_name=SetChainName,
-                                      creation_time=now(),
+                                      creation_time=erlang:timestamp(),
                                       mode=CMode,
                                       epoch_number=NewEpoch,
                                       all_members=All_list,
@@ -493,7 +492,7 @@ set_active_timer(#ch_mgr{name=MyName, members_dict=MembersDict}=S) ->
     %% Perturb the order a little bit, to avoid near-lock-step
     %% operations every few ticks.
     MSec = calc_sleep_ranked_order(400, 1500, MyName, FLU_list) +
-        random:uniform(100),
+        rand:uniform(100),
     {ok, TRef} = timer:send_interval(MSec, tick_check_environment),
     S#ch_mgr{timer=TRef}.
 
@@ -928,7 +927,7 @@ calc_projection2(LastProj, RelativeToServer, AllHosed, Dbg,
                                                   {up_witnesses, UpWitnesses},
                                                   {why_none, Why}],
                                              dbg2=[
-                                               {creation_time,os:timestamp()}]},
+                                               {creation_time, erlang:timestamp()}]},
                                  machi_projection:update_checksum(P_none1)
                          end
                  end;
@@ -991,7 +990,7 @@ update_runenv_with_up_nodes(UpNodesNew, RunEnv1) ->
     if UpNodesNew /= LastUpNodes0 ->
             replace(RunEnv1,
                     [{last_up_nodes, UpNodesNew},
-                     {last_up_nodes_time, now()}]);
+                     {last_up_nodes_time, erlang:timestamp()}]);
        true ->
             RunEnv1
     end.
@@ -1164,7 +1163,7 @@ do_react_to_env(S) ->
              end,
         %% Perhaps tell the fitness server to spam everyone.
 ?TTT(),
-        case random:uniform(100) of
+        case rand:uniform(100) of
             N when N < 5 ->
                 machi_fitness:send_spam_to_everyone(S#ch_mgr.fitness_svr),?TTT();
             _ ->
@@ -1177,7 +1176,7 @@ do_react_to_env(S) ->
         %% all servers in A20 will give us the info we need to remove a down
         %% server from our last_down list (and also inform our fitness server
         %% of the down->up change).
-        %% 
+        %%
         %% TODO? We may need to change this behavior to make our latency
         %% jitter smoother by only talking to servers that we believe are fit.
         %% But we will defer such work because it may never be necessary.
@@ -1270,7 +1269,7 @@ react_to_env_A21(Retries, UnanimousTag, P_latest, ReadExtra, S) ->
     %% The UnanimousTag isn't quite sufficient for our needs.  We need
     %% to determine if *all* of the UPI+Repairing FLUs are members of
     %% the unanimous server replies.  All Repairing FLUs should be up
-    %% now (because if they aren't then they cannot be repairing), so 
+    %% now (because if they aren't then they cannot be repairing), so
     %% all Repairing FLUs have no non-race excuse not to be in UnanimousFLUs.
     UnanimousFLUs = lists:sort(proplists:get_value(unanimous_flus, ReadExtra)),
     UPI_Repairing_FLUs = lists:sort(P_latest#projection_v1.upi ++
@@ -1517,7 +1516,7 @@ react_to_env_A40(Retries, P_newprop, P_latest, LatestUnanimousP,
                             %% step that we would end up in this branch 100%
                             %% of the time because each would only ever see
                             %% P_newprop authored by the other server.
-                            timer:sleep(random:uniform(100)),
+                            timer:sleep(rand:uniform(100)),
                             react_to_env_C300(P_newprop, P_latest, S)
                     end;
                true ->
@@ -1795,7 +1794,7 @@ react_to_env_B10(Retries, P_newprop, P_latest, LatestUnanimousP, P_current_calc,
             %% their projections in a healthy way.  TODO: perhaps use a
             %% counter here to silence ourselves for good after a certain time
             %% and/or number of retries?
-            case random:uniform(100) of
+            case rand:uniform(100) of
                 N when N < 4 ->
                     ?REACT({b10, ?LINE}),
                     react_to_env_C300(P_newprop, P_latest, S);
@@ -1897,7 +1896,7 @@ react_to_env_C100(P_newprop,
             %% if Sane == true -> ok;  true -> ?V("~w-insane-~w-~w:~w:~w@~w,", [?LINE, MyName, P_newprop#projection_v1.epoch_number, P_newprop#projection_v1.upi, P_newprop#projection_v1.repairing, ?LINE]) end, %%% DELME!!!
 
     V = case file:read_file("/tmp/bugbug."++atom_to_list(S#ch_mgr.name)) of {ok,_} -> true; _ -> false end,
-    if V -> 
+    if V ->
             react_to_env_C103(P_newprop, P_latest, P_current_calc, S);
        true ->
             react_to_env_C110(P_latest, S)
@@ -2203,7 +2202,7 @@ projection_transition_is_sane_final_review(
   #projection_v1{mode=cp_mode, upi=UPI2, witnesses=Witness_list}=_P2,
   true) ->
     %% All earlier sanity checks has said that this transition is sane, but
-    %% we also need to make certain that any CP mode transition preserves at 
+    %% we also need to make certain that any CP mode transition preserves at
     %% least one non-witness server in the UPI list.  Earlier checks have
     %% verified that the ordering of the FLUs within the UPI list is ok.
     UPI1_s = ordsets:from_list(UPI1 -- Witness_list),
@@ -2483,7 +2482,7 @@ poll_private_proj_is_upi_unanimous3(#ch_mgr{name=MyName, proj=P_current} = S) ->
             Epoch = P_current#projection_v1.epoch_number,
             case ?FLU_PC:read_projection(ProxyPid, private, Epoch) of
                 {ok, P_currentFull} ->
-                    Now = os:timestamp(),
+                    Now = erlang:timestamp(),
                     Annotation = make_annotation(EpochID, Now),
                     NewDbg2 = [Annotation|P_currentFull#projection_v1.dbg2],
                     NewProj = P_currentFull#projection_v1{dbg2=NewDbg2},
@@ -2564,7 +2563,7 @@ perhaps_start_repair(#ch_mgr{name=MyName,
         #projection_v1{creation_time=Start,
                        upi=[_|_]=UPI,
                        repairing=[_|_]} ->
-            RepairId = {MyName, os:timestamp()},
+            RepairId = {MyName, erlang:timestamp()},
             RepairOpts = [{repair_mode,repair}, verbose, {repair_id,RepairId}],
             %% RepairOpts = [{repair_mode, check}, verbose],
             RepairFun = fun() -> do_repair(S, RepairOpts, CMode) end,
@@ -2572,13 +2571,13 @@ perhaps_start_repair(#ch_mgr{name=MyName,
             StabilityTime = application:get_env(machi, stability_time, ?REPAIR_START_STABILITY_TIME),
             IgnoreStabilityTime_p = proplists:get_value(ignore_stability_time,
                                                         S#ch_mgr.opts, false),
-            case timer:now_diff(os:timestamp(), Start) div 1000000 of
+            case timer:now_diff(erlang:timestamp(), Start) div 1000000 of
                 N when MyName == LastUPI andalso
                        (IgnoreStabilityTime_p orelse
                         N >= StabilityTime) ->
                     {WorkerPid, _Ref} = spawn_monitor(RepairFun),
                     S#ch_mgr{repair_worker=WorkerPid,
-                             repair_start=os:timestamp(),
+                             repair_start=erlang:timestamp(),
                              repair_final_status=undefined};
                 _ ->
                     S
@@ -2613,7 +2612,7 @@ do_repair(#ch_mgr{name=MyName,
                       end || Rep <- Repairing],
     case lists:usort(RepairEpochIDs) of
         [MyEpochID] ->
-            T1 = os:timestamp(),
+            T1 = erlang:timestamp(),
             RepairId = proplists:get_value(repair_id, Opts, id1),
             error_logger:info_msg(
               "Repair ~w start: tail ~p of ~p -> ~p, ~p\n",
@@ -2622,7 +2621,7 @@ do_repair(#ch_mgr{name=MyName,
             UPI = UPI0 -- Witness_list,
             Res = machi_chain_repair:repair(RepairMode, MyName, Repairing, UPI,
                                             MembersDict, ETS, Opts),
-            T2 = os:timestamp(),
+            T2 = erlang:timestamp(),
             Elapsed = (timer:now_diff(T2, T1) div 1000) / 1000,
             ets:insert(ETS, {t_elapsed_seconds, Elapsed}),
             Summary = case Res of ok -> "success";

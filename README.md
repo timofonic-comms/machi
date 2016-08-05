@@ -172,3 +172,50 @@ restriction.
 If you'd like to work on a protocol such as Thrift, UBF,
 msgpack over UDP, or some other protocol, let us know by
 [opening an issue to discuss it](./issues/new).
+
+### 5.0 Rebar3 Fork
+
+```
+$ rebar3 release
+...
+$ _build/default/rel/machi/bin/machi console
+...
+(machi@127.0.0.1)1>Prefix = <<"pre">>,
+Chunk1 = <<"yochunk">>,
+NSInfo = undefined,
+NoCSum = <<>>,
+Host = "localhost",
+PortBase = 64454,
+Os = [{ignore_stability_time, true}, {active_mode, false}],
+Witness_list = [],
+F = fun(X) -> case lists:member(X, Witness_list) of
+                  true ->
+                      [{witness_mode, true}|Os];
+                  false ->
+                      Os
+              end
+    end,
+{ok,_}=machi_flu_psup:start_flu_package(a, PortBase+0, "./data.a", F(a)),
+{ok,_}=machi_flu_psup:start_flu_package(b, PortBase+1, "./data.b", F(b)),
+{ok,_}=machi_flu_psup:start_flu_package(c, PortBase+2, "./data.c", F(c)),
+D = orddict:from_list(
+      [{a,{p_srvr,a,machi_flu1_client,"localhost",PortBase+0,[]}},
+       {b,{p_srvr,b,machi_flu1_client,"localhost",PortBase+1,[]}},
+       {c,{p_srvr,c,machi_flu1_client,"localhost",PortBase+2,[]}}]).
+
+CMode = if Witness_list == [] -> ap_mode;
+           Witness_list /= [] -> cp_mode
+        end.
+
+ok = machi_chain_manager1:set_chain_members(a_chmgr, ch0, 0, CMode,
+                                            D, Witness_list),
+ok = machi_chain_manager1:set_chain_members(b_chmgr, ch0, 0, CMode,
+                                            D, Witness_list),
+ok = machi_chain_manager1:set_chain_members(c_chmgr, ch0, 0, CMode,
+                                            D, Witness_list).
+
+{ok, C1} = machi_cr_client:start_link([P || {_,P}<-orddict:to_list(D)]).
+{ok,{1024,7,
+     <<"pre^^00000000^bb2de056-9bc6-4c49-be72-af834c3f1423^2">>}}
+(machi@127.0.0.1)2>
+```

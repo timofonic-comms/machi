@@ -149,7 +149,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE). 
+-define(SERVER, ?MODULE).
 
 -record(state, {
           flus = []   :: [atom()],
@@ -956,7 +956,7 @@ make_pending_config(Term) ->
 
 quick_admin_sanity_check(File) ->
     try
-        {ok, Env} = quick_admin_run_ast(File),
+        {ok, _Env} = quick_admin_run_ast(File),
         ok
     catch X:Y ->
             {error, {X,Y, erlang:get_stacktrace()}}

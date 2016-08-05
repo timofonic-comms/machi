@@ -109,7 +109,7 @@ handle_call({update_local_down_list, Down, MembersDict}, _From,
                    local_down=OldDown, members_dict=OldMembersDict,
                    admin_down=AdminDown}=S) ->
     verbose("FITNESS: ~w has down suspect ~w\n", [MyFluName, Down]),
-    NewMap = store_in_map(OldMap, MyFluName, erlang:now(), Down,
+    NewMap = store_in_map(OldMap, MyFluName, erlang:timestamp(), Down,
                           AdminDown, [props_yo]),
     S2 = if Down == OldDown, MembersDict == OldMembersDict ->
                  %% Do nothing only if both are equal.  If members_dict is
@@ -124,7 +124,7 @@ handle_call({add_admin_down, DownFLU, DownProps}, _From,
                    local_down=OldDown, admin_down=AdminDown}=S) ->
     verbose("FITNESS: ~w add admin down ~w\n", [MyFluName, DownFLU]),
     NewAdminDown = [{DownFLU,DownProps}|lists:keydelete(DownFLU, 1, AdminDown)],
-    S3 = finish_admin_down(erlang:now(), OldDown, NewAdminDown,
+    S3 = finish_admin_down(erlang:timestamp(), OldDown, NewAdminDown,
                            [props_yo], S),
     {reply, ok, S3};
 handle_call({delete_admin_down, DownFLU}, _From,
@@ -132,7 +132,7 @@ handle_call({delete_admin_down, DownFLU}, _From,
                    local_down=OldDown, admin_down=AdminDown}=S) ->
     verbose("FITNESS: ~w delete admin down ~w\n", [MyFluName, DownFLU]),
     NewAdminDown = lists:keydelete(DownFLU, 1, AdminDown),
-    S3 = finish_admin_down(erlang:now(), OldDown, NewAdminDown,
+    S3 = finish_admin_down(erlang:timestamp(), OldDown, NewAdminDown,
                            [props_yo], S),
     {reply, ok, S3};
 handle_call({incoming_spam, Author, Dict}, _From, S) ->
@@ -220,7 +220,7 @@ code_change(_OldVsn, S, _Extra) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 make_unfit_list(#state{members_dict=MembersDict}=S) ->
-    Now = erlang:now(),
+    Now = erlang:timestamp(),
     F = fun({Server, {UpdateTime, DownList, AdminDown, _Props}},
             {ProblemAcc, AdminAcc}) ->
                 case timer:now_diff(Now, UpdateTime) div (1000*1000) of

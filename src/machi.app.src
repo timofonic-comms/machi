@@ -1,7 +1,7 @@
 {application, machi, [
     {description, "A village of write-once files."},
     {vsn, "0.0.1"},
-    {applications, [kernel, stdlib, crypto, cluster_info, ranch]},
+    {applications, [kernel, stdlib, crypto, cluster_info, ranch, lager, eleveldb, sext, riak_dt, protobuffs]},
     {mod,{machi_app,[]}},
     {registered, []},
     {env, [

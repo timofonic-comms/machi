@@ -1,3 +1,5 @@
+_build
+rebar3.crashdump
 prototype/chain-manager/patch.*
 .eqc-info
 .eunit

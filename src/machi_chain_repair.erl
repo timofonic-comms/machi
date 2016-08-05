@@ -295,7 +295,7 @@ make_repair_directives3([{Offset, Size, CSum, _FLU}=A|Rest0],
                  Missing = FLUs -- Gots,
                  _ThisSrc = case lists:member(Src, Gots) of
                                true  -> Src;
-                               false -> hd(Gots)
+                               false -> _ = hd(Gots)
                            end,
                  _ = [ets:update_counter(ETS, {directive_bytes, FLU_m}, Size) ||
                          FLU_m <- Missing],

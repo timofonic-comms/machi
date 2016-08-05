@@ -1,0 +1,12 @@
+[{<<"cluster_info">>,
+  {git,"git://github.com/basho/cluster_info",
+       {ref,"d61d05534e3eaddff6e53d817d36c1c9f8f04cae"}},
+  0},
+ {<<"eleveldb">>,{pkg,<<"eleveldb">>,<<"2.2.19">>},0},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
+ {<<"lager">>,{pkg,<<"lager">>,<<"3.2.1">>},0},
+ {<<"meck">>,{pkg,<<"meck">>,<<"0.8.4">>},1},
+ {<<"protobuffs">>,{pkg,<<"protobuffs">>,<<"0.8.4">>},0},
+ {<<"ranch">>,{pkg,<<"ranch">>,<<"1.2.1">>},0},
+ {<<"riak_dt">>,{pkg,<<"riak_dt">>,<<"2.1.1">>},0},
+ {<<"sext">>,{pkg,<<"sext">>,<<"1.4.0">>},0}].
