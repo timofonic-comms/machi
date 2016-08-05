@@ -8,6 +8,7 @@ Outline
 2. [Where to learn more about Machi](#sec2)
 3. [Development status summary](#sec3)
 4. [Contributing to Machi's development](#sec4)
+5. [Running Rebar3 Fork](#sec5)
 
 <a name="sec1">
 ## 1. Why another blob/file store?
@@ -173,6 +174,7 @@ If you'd like to work on a protocol such as Thrift, UBF,
 msgpack over UDP, or some other protocol, let us know by
 [opening an issue to discuss it](./issues/new).
 
+<a name="sec5">
 ### 5.0 Rebar3 Fork
 
 ```
