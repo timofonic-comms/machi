@@ -217,6 +217,7 @@ ok = machi_chain_manager1:set_chain_members(c_chmgr, ch0, 0, CMode,
                                             D, Witness_list).
 
 {ok, C1} = machi_cr_client:start_link([P || {_,P}<-orddict:to_list(D)]).
+machi_cr_client:append_chunk(C1, NSInfo, Prefix, Chunk1, NoCSum).
 {ok,{1024,7,
      <<"pre^^00000000^bb2de056-9bc6-4c49-be72-af834c3f1423^2">>}}
 (machi@127.0.0.1)2>
